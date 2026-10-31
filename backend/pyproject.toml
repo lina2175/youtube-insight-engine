@@ -9,10 +9,12 @@ dependencies = [
   "pydantic-settings>=2.8,<3",
   "sqlalchemy>=2.0,<2.1",
   "httpx>=0.28,<0.29",
+  "pandas>=2.2,<3",
 ]
 
 [project.scripts]
 youtube-sample = "youtube_insight.etl.cli:main"
+youtube-offline-demo = "youtube_insight.etl.offline_cli:main"
 
 [dependency-groups]
 dev = ["pytest>=8.3,<10", "ruff>=0.11,<1"]

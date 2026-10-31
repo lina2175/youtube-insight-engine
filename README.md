@@ -1,8 +1,8 @@
 # YouTube Insight Engine
 
-A portfolio project exploring Faouzia's public YouTube presence using Python, FastAPI, React/TypeScript and SQLite. Built to demonstrate an understandable data pipeline and explainable analysis for GitHub, a project presentation, LinkedIn and a CV.
+A multi-channel YouTube intelligence portfolio application built with Python/Pandas ETL, FastAPI, SQLAlchemy/SQLite and a premium dark React/TypeScript/Tailwind interface. The complete roadmap includes video exploration, channel comparison, meaningful SQL/statistical analytics, country-aware editable-RPM scenarios, evidence-based recommendations and pipeline monitoring. Faouzia is an optional example, not fixed application scope.
 
-**Phase 2:** reusable public YouTube extraction client and an opt-in sample CLI are implemented. The web app remains the offline foundation and never invokes collection. There is no database loading, analytics, revenue calculation, authentication, or background collection. Live integration is unverified; current policy review is still required. See the [plan](docs/IMPLEMENTATION_PLAN.md), [audit](docs/PRE_PHASE_1_AUDIT.md), [Phase 1 verification](docs/PHASE_1_VERIFICATION.md), and [Phase 2 verification](docs/PHASE_2_VERIFICATION.md).
+**Phase 3A:** the offline ETL and relational storage foundation is implemented using explicitly fictional multi-channel fixtures only. Phase 1's web shell/health checks and Phase 2's opt-in extraction client remain intact. No live data is fetched or loaded in Phase 3A. Dashboard/analytics/revenue/recommendation features remain future work. See the [complete plan](docs/IMPLEMENTATION_PLAN.md), [offline ETL guide](docs/OFFLINE_ETL.md), [Phase 3A verification](docs/PHASE_3A_VERIFICATION.md), [audit](docs/PRE_PHASE_1_AUDIT.md), and earlier [Phase 1](docs/PHASE_1_VERIFICATION.md)/[Phase 2](docs/PHASE_2_VERIFICATION.md) evidence.
 
 ## Requirements and installation
 
@@ -22,7 +22,7 @@ cp -n .env.example .env
 cp -n frontend/.env.example frontend/.env
 ```
 
-Defaults work without either file or any credentials. The backend reads the root `.env` regardless of launch directory. Precedence is explicit constructor settings (tests), process environment, root `.env`, then defaults. Relative `DATABASE_PATH` resolves against the repository root. Its default is `.local/youtube-insight.sqlite3`; the parent directory and database initialize on backend startup. Initialization sets `PRAGMA user_version=1` and creates no domain tables. Unknown schema versions fail startup rather than being silently migrated.
+Defaults work without either file or any credentials. The backend reads the root `.env` regardless of launch directory. Precedence is explicit constructor settings (tests), process environment, root `.env`, then defaults. Relative `DATABASE_PATH` resolves against the repository root. Its default is `.local/youtube-insight.sqlite3`; the parent directory and database initialize on backend startup. Fresh foundation initialization sets `PRAGMA user_version=1` and creates no domain tables. The explicit offline ETL initializer upgrades its selected database to v2 with domain tables; the health app also accepts v2. Unknown schema versions fail startup rather than being silently migrated.
 
 `CORS_ORIGINS` is a JSON list of exact frontend origins, default `["http://127.0.0.1:5173"]`. If using `localhost` instead of `127.0.0.1`, configure the matching origin explicitly. Backend bind/port are Uvicorn command-line options.
 
@@ -68,11 +68,20 @@ Pytest uses temporary SQLite databases and synthetic transaction records. Vitest
 
 - `backend/src/youtube_insight/config.py`: validated server configuration; secrets use redacted types.
 - `backend/src/youtube_insight/api/`: FastAPI health route and application lifecycle. Future domain routes use `/api/v1`; operational health is `/health`.
-- `backend/src/youtube_insight/data/`: SQLAlchemy engine, declarative base, session factory, SQLite pragmas and version initialization. No domain models exist yet. Connections use a five-second lock timeout and enforce foreign keys.
+- `backend/src/youtube_insight/data/`: SQLAlchemy engine, declarative base, session factory, SQLite pragmas and version initialization. Explicit v2 domain models store synthetic channels, videos and pipeline runs; see the offline ETL guide. Connections use a five-second lock timeout and enforce foreign keys.
 - `frontend/src/`: React shell, reusable panel/status components, health request adapter, and Tailwind theme tokens for surfaces, typography, borders, focus and status colors. No external fonts, images or UI framework are needed.
-- `backend/src/youtube_insight/etl/`: public YouTube client, normalized metadata models, and opt-in CLI. Extraction does not import the data layer or write SQLite. Database loading and analysis remain deferred.
+- `backend/src/youtube_insight/etl/`: public YouTube client, normalized metadata models, and opt-in CLI. The live extraction client still does not write SQLite. A separate synthetic-only Pandas pipeline now validates/transforms/loads fictional fixtures. Live loading and analytical features remain deferred.
 
 The browser asks FastAPI whether it is healthy. FastAPI checks SQLite through the shared data layer. The browser never opens the database or receives server secrets. SQLAlchemy is included at the user's request; no migration platform or additional database service is needed for this foundation.
+
+## Offline multi-channel ETL demo (Phase 3A)
+
+```bash
+uv run --project backend --frozen youtube-offline-demo \
+  --database .local/phase3a-demo.sqlite3
+```
+
+Run twice on a fresh path: both runs report 2 fictional channels and 3 videos, with 1 then 2 execution records. The data path is ignored by Git. No key or network is used. Same-day fixtures are stable; tests use fixed clocks. The [offline ETL guide](docs/OFFLINE_ETL.md) explains validation, Pandas nullable types, migration, idempotent transactions, quality records and retention/deletion. Synthetic TTLs do not certify live API compliance.
 
 ## Public YouTube extraction
 
@@ -93,9 +102,9 @@ The CLI retrieves a channel's uploads playlist, traverses bounded pages, and fet
 
 ## Public-data limitations and later policy gates
 
-Public data cannot reveal another creator's actual revenue, viewer countries, private Analytics, watch time, or retroactive daily growth. Hidden metrics are unknown, not zero. Any future revenue output must be labeled as a scenario using explicit viewer-country and effective RPM assumptions, never Faouzia's actual earnings. Artist nationality is not audience geography.
+Public data cannot reveal another creator's actual revenue, viewer countries, private Analytics, watch time, or retroactive daily growth. Hidden metrics are unknown, not zero. Any future revenue output must be labeled as a scenario using explicit viewer-country and effective RPM assumptions, never a creator's actual earnings. Artist nationality is not audience geography.
 
-Before live collection, verify the proposed artist channel, inspect current YouTube terms and the reference project's license, and implement reviewed freshness/retention/deletion rules. No historical snapshots or live exports are included. Keep real API data, secrets and databases out of Git. Do not claim policy compliance until reviewed.
+Before live collection, verify each selected channel, inspect current YouTube terms and the reference project's license, and implement reviewed freshness/retention/deletion rules. No historical snapshots or live exports are included. Keep real API data, secrets and databases out of Git. Do not claim policy compliance until reviewed.
 
 ## Learning references and provenance
 

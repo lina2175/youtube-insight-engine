@@ -1,135 +1,111 @@
-# Implementation plan
+# YouTube Insight Engine — implementation plan
 
-## Mission and decisions
+## Product mission and complete scope
 
-Create a small, explainable portfolio application for Faouzia's public YouTube channel. Demonstrate collection, normalization, persistence, API design, UI presentation, and honest analysis. Use Python ETL, FastAPI, React/TypeScript, and SQLite. Local single-user development is the deployment target. This plan is a new baseline because the requested planning files were absent; external reference instructions remain unverified.
+Build a reproducible multi-channel YouTube intelligence portfolio application for exploring videos, comparing channels, understanding content performance, testing revenue assumptions and explaining evidence-based recommendations. Faouzia is an optional example, never a fixed channel or schema assumption. The product should demonstrate data engineering and analytical judgment through meaningful Python/Pandas transformations, relational SQL, statistics and a premium dark React SaaS interface.
 
-Phase 1 has now been explicitly authorized. The user additionally requested SQLAlchemy, Tailwind CSS, Vitest, and the unversioned `/health` endpoint. These supersede the earlier no-ORM recommendation and `/api/v1/health` proposal. Phase 2 is now explicitly authorized for extraction only; database loading and analytics are excluded.
+Final capabilities:
 
-## Architecture and contracts
+- Multiple independently selected channels and their public video inventories, with explicit coverage/freshness and comparable date/format filters.
+- Premium responsive dark React/TypeScript/Tailwind workspace: channel management, video exploration, channel comparison, accessible interaction, consistent components, loading/empty/stale/error states and clearly labeled synthetic demo mode.
+- Python/Pandas ETL, validated records, SQLite relational storage through SQLAlchemy, idempotent refreshes, atomic writes and observable execution/data-quality records.
+- Meaningful SQL aggregates (joins, grouping, ranking, window calculations where appropriate) and statistical summaries: distributions, medians/quantiles, variability and sample sizes. Compare like-for-like age/time/format cohorts. Current cumulative counts do not supply historical daily growth.
+- Country-aware revenue simulations with editable viewer-country weights, low/base/high effective RPM assumptions, currency and view scope. These are hypothetical scenarios, never actual creator revenue or inferred audience geography.
+- Content recommendations supported by explicit comparisons, sample sizes, uncertainty and documented heuristics; avoid causal claims from correlations or generic advice presented as measured evidence.
+- Pipeline monitoring and data quality: run outcomes, durations/counts, rejected data, coverage, stale data, quota/errors and safe operator diagnostics.
+- GitHub reproduction: frozen installs, offline synthetic fixtures, automated tests/CI, architecture/data dictionary, SQL examples, limitations, attribution and a short portfolio demo narrative.
+
+## Architecture and responsibilities
 
 ```text
-YouTube Data API v3 → Python ETL → data repositories → SQLite
-React → FastAPI /api/v1 → analysis services / data repositories → SQLite
+Synthetic fixtures → Pandas validation/transforms → SQLAlchemy repository → SQLite
+YouTube Data API → explicit Python extraction → [future policy-gated loading]
+React → FastAPI /api/v1 → analytical services / read repositories → SQLite
 ```
 
-ETL runs as a separate explicit CLI process, never as an API request side effect. It shares one Python package and the data-access layer with FastAPI. API handlers validate requests and serialize responses; services calculate metrics; repositories own parameterized SQL, transactions, and connections. React handles display and user input only. No credentials or database access in the browser.
+The operational health route stays `/health`. Frontend never receives credentials, runs SQL, calls YouTube directly or implements independent revenue formulas. FastAPI validates/serializes requests and invokes services; repositories own SQL and transactions; Pandas normalizes/validates data; services will own statistical reasoning and scenarios. Collection runs explicitly outside HTTP GET handlers. One Python package and a local single-writer SQLite database are sufficient; multi-channel does not imply multiple deployments.
 
-Planned layout:
+Use Python 3.12, uv with `backend/uv.lock`, Node pinned by `.nvmrc`, npm with `frontend/package-lock.json`, FastAPI/Uvicorn, HTTPX, Pydantic Settings, Pandas, SQLAlchemy/SQLite, pytest/Ruff, React/TypeScript/Vite/Tailwind and Vitest/Testing Library. Pandas is now explicitly required. No Spark, Kafka, Airflow, Redis, extra databases, authentication, paid-service integration or deployment system without a demonstrated need and separate authorization.
 
-```text
-backend/pyproject.toml, uv.lock
-backend/src/youtube_insight/{api,data,etl,services}/
-backend/tests/
-frontend/package.json, package-lock.json
-frontend/src/
-docs/
-```
+## Existing phases (preserve)
 
-Use Python 3.12, uv, Node 22, npm; record exact tested versions and package-manager pins during Phase 1. The small baseline uses FastAPI/Uvicorn, HTTPX, Pydantic Settings, pytest, Ruff, React/TypeScript/Vite, SQLAlchemy 2 with Python `sqlite3`, Tailwind CSS, and Vitest/Testing Library. No additional ORM/migration framework, pandas, Airflow, Spark, Kafka, Redis, OAuth, scraping, containers, or cloud deployment by default.
+### Phase 1 — Offline foundation (complete)
 
-SQLite: one ETL writer; short transactions, bounded busy timeout, foreign keys enabled, unique channel/video IDs, idempotent upserts, schema version tracked with a small explicit initialization mechanism. API reads use their own short-lived connections; no shared connection across request threads. Collection failures must not overwrite a complete dataset with partial results. Database path is configurable outside source directories. Review locking and transaction behavior before introducing concurrent collection.
+FastAPI `/health`, secure optional server configuration, React shell/real backend connection indicator, reusable dark theme, SQLite version initialization, dependency locks, backend/frontend tests and CI. Keep startup and tests working. Foundation startup need not create domain tables; domain initialization is an explicit operation.
 
-The operational `/health` endpoint is unversioned; future domain routes use `/api/v1`. Before Phase 2, define nullable fields and response models: UTC `fetched_at`, freshness/expiry, source/channel identity, coverage status and collection outcome. Collections have bounded pagination and deterministic ordering. API routes live under `/api/v1`; frontend types must match OpenAPI contracts. Revenue calculations have one backend source of truth. Health output contains no credentials or absolute local paths.
+### Phase 2 — Public API extraction (complete offline; live verification blocked)
 
-## Public-data and policy gate
+Reusable channels/playlistItems/videos client, bounded pagination/50-ID batching, nullable public metadata and aware UTC timestamps, sanitized structured logging, retry/error classification and opt-in sample CLI. Preserve existing behavior and mocked tests. No loading is coupled to this client in Phase 3A. See `PHASE_2_VERIFICATION.md` for actual release/live limitations.
 
-Before live collection, inspect the reference project's instructions/license and verify channel `UCLwbyg15zJgjtNL0EErkOPA` belongs to the intended Faouzia profile. Review and date a policy register using current official sources:
+## Phase 3A — Offline ETL and database development (authorized now)
+
+Only built-in explicitly synthetic multi-channel fixtures may enter this path. No fetching or persistence of live YouTube data. No dashboard, API analytics or revenue/recommendation features.
+
+Deliver:
+
+1. Strict synthetic fixture envelope and typed row validation. IDs must use a synthetic namespace. Reject negative/out-of-range counts, missing identity/reference fields, blank titles, invalid/naive timestamps, future collection times and publication-after-collection. Null counts remain unknown; zero remains zero.
+2. Pandas transformations with nullable integer statistics, UTC datetime columns, normalized text, deterministic duplicate resolution (latest collection wins), conflict/orphan checks and data-quality counts. Never silently truncate or coerce invalid counts to zero.
+3. SQLAlchemy channels/videos models with channel foreign keys, current-state metadata/statistics, UTC collection/expiry, synthetic provenance and relational/check constraints. No automatic historical snapshots. Pipeline execution records hold operational status/counts and sanitized failure codes, not payloads or secrets.
+4. Explicit, transactional version-1-to-version-2 schema initialization that preserves existing foundation data and rejects unknown versions. No migration framework needed for this single additive migration.
+5. Atomic idempotent domain loading: unique resource IDs; same/older observations cannot overwrite newer state or extend expiry. Each invocation has a distinct run record. Failure rolls back all data writes and records a failed outcome separately. Validation failures do not create a partially loaded dataset.
+6. Clock-testable expiry, explicit channel/video deletion with dependent video cascade, full purge, and bounded operational run-record retention. A synthetic TTL (1–30 days) is test configuration, not reviewed YouTube permission. Expired fixture data is purged before loading; reruns do not reset collection age. No caches/exports/backups are added.
+7. An explicit offline demo CLI taking a separate database path and using only bundled fixtures, plus data dictionary and reproduction instructions.
+
+Acceptance: test multiple channels and FK association, null versus zero including large integers, duplicate/conflicting observations, invalid payloads, stale upserts, transaction rollback, preserved schema migration, pipeline successes/failures, expiry boundaries, cascades/full purge and run-record retention. Repeated demo loading changes run history but not domain cardinality or timestamps. Existing Phase 1/2 tests remain passing. Run all backend/frontend tests, Ruff lint/format, TypeScript and production build. Record actual outcomes in `PHASE_3A_VERIFICATION.md`. Commit separately; do not push or start subsequent phases automatically.
+
+## Phase 3B — Policy-gated live loading and operational readiness (not authorized)
+
+Verify selected channel identities and actual API behavior with bounded manual smoke checks. Review current official YouTube terms and quota costs; document concrete refresh/deletion deadlines, attribution and allowed derived uses. Add a separately reviewed bridge from extraction models to validated live storage, including missing/unavailable resource handling and coverage-aware refreshes. Phase 3A deliberately rejects live provenance; do not relabel live data as synthetic. Enforce retention/deletion across related records and any future caches/exports/backups. Distinguish source deletion from transient failure or a limited sample.
+
+Acceptance: policy register dated with applicable clauses; mocked complete/partial/quota/error loading cases; live checks separate from CI; key/permissions restrictions verified; no stale refresh extends expiry; deletion and rollback tests; quota/request budgets documented. No live-use compliance claim from an offline synthetic test.
+
+## Phase 4 — Read API and premium exploration/comparison UI (not authorized)
+
+Define versioned bounded API contracts for channel inventory, filtered/sorted/paginated videos, freshness/coverage and comparisons. Build the premium dark SaaS workspace with multi-channel selection, responsive accessible reusable components and clear synthetic/demo labeling. Support like-for-like filters and explain unknown values. GET must not trigger collection.
+
+Acceptance: SQL/API contracts and pagination/input bounds tested; no secret/path leakage; UI loading/empty/error/stale states and channel switching tested; frontend/backends agree on types; functional fixture demo and production build pass. No misleading live connection labels for fixture data.
+
+## Phase 5 — SQL/statistical analytics and evidence-based recommendations (not authorized)
+
+Implement documented SQL joins/aggregates/rankings and meaningful statistical summaries, respecting coverage, video age, format and observation time. Show denominators/sample sizes and uncertainty. Recommendations cite the exact cohort comparison and metric, minimum sample thresholds and limitations; insufficient evidence produces an explicit no-recommendation outcome. No unsupported causal explanations, private Analytics assumptions, historical growth charts or ML infrastructure by default.
+
+Acceptance: hand-computed synthetic reference results, SQL edge/null/sample cases, cohort boundaries and deterministic recommendation rationales; correlated signals not described as causes; accessible explanatory UI and evidence traceability.
+
+## Phase 6 — Country-aware revenue simulations (not authorized)
+
+Use explicit editable viewer-country weights summing to 100% and low/base/high effective creator RPM per thousand total scenario views. Formula: `views / 1000 × sum(country_weight × effective_RPM_country)`. Keep one backend calculation source and validate finite/nonnegative inputs, ordered scenarios, currency and view scope. Include a rest-of-world option. Do not use creator nationality as viewer geography, call scenarios real earnings, or turn lifetime views into monthly revenue. Shorts need a separate labeled model; music rights/eligibility remain unknown.
+
+Acceptance: deterministic formula cases (100,000 views; equal $1/$3 RPM mix → $200), invalid-input and weight tests; clear low/base/high assumptions and currency/period labels; editable UI; permitted-use policy reviewed before live-derived output.
+
+## Phase 7 — Pipeline monitoring and portfolio release (not authorized)
+
+Expose the existing run/data-quality evidence safely in the UI; add coverage/freshness monitoring and operator actions appropriate to the reviewed scope. Complete clean-clone offline demonstration, optional bounded live setup, architecture/schema diagrams, SQL walkthroughs, screenshots, limitations, references/license attribution and presentation/CV wording that distinguishes implemented evidence from future features.
+
+Acceptance: execute documented clean-checkout fixture demo with lockfiles; all suites/builds pass or failures accurately documented; no keys/private/live output tracked; tested cleanup/retention; hosted CI status verified when accessible. Monitoring storage foundations start in 3A; monitoring screens and analytics wait for this phase. Public deployment needs a separate operations/security decision.
+
+## Data governance and verification across phases
+
+Use UTC timestamps and nullable unknown statistics, parameterized SQL, foreign keys, bounded locks/transactions and one ETL writer. Keep credentials server-side and TLS verification enabled. No OAuth/private Analytics/scraping for the public-data workflow. No unreviewed real API exports, snapshots or indefinite retention. Public APIs do not reveal actual revenue, viewer countries, watch time or retroactive daily metrics.
+
+Official live-use review sources:
 
 - https://developers.google.com/youtube/terms/api-services-terms-of-service
 - https://developers.google.com/youtube/terms/developer-policies
 - https://developers.google.com/youtube/v3/docs
 - https://developers.google.com/youtube/v3/determine_quota_cost
 
-Record applicable clauses and concrete operational rules rather than asserting generic compliance. The review must cover permitted derived metrics/revenue scenarios, attribution/display, storage, refresh, deletion, and any privacy/disclosure obligations. If a planned feature conflicts, defer it and revise the plan before implementing it.
-
-Provisional storage design: refresh displayed API data within 24 hours where quota permits; label data older than that stale and hide it after its policy deadline. Store API data no longer than 30 days since successful refresh unless the verified applicable rule requires a shorter period. A failed refresh does not reset expiry. The 30-day value is a conservative planning cap, not a legal conclusion or permission for every data type. Enforce deletion on ETL startup and before serving expired data; purge expired rows rather than merely filtering the UI. Do not persist raw responses, automatic historical snapshots, API exports, or database backups by default.
-
-Deletion includes dependent rows, derived caches, logs containing data, and any later exports/backups; any such feature needs an explicit deletion design first. Confirmed unavailable/deleted source resources trigger removal; transient network failures and quota exhaustion must not be mistaken for confirmed deletion. Provide an explicit local purge command and documented deletion procedure. Preserve only non-sensitive run status needed to diagnose outcomes. Test with a controlled clock. No historical growth chart until retention and derived-data permission are resolved.
-
-Public endpoints may expose available channel/video metadata, current public counts, and clearly scoped computed summaries. They cannot obtain third-party private Analytics, actual earnings, viewer countries, watch time or retroactive daily growth. Hidden counts remain null. Enumerating the uploads playlist is preferred over quota-heavy search; handle pagination, unavailable videos and partial coverage explicitly. Use timeouts, bounded backoff for retryable errors, quota accounting, and distinguish invalid credentials, quota exhaustion, missing resources and transient failures.
-
-## Phase 1 — Offline development foundation
-
-Required deliverables:
-
-1. Python package skeleton with pinned toolchain, dependency manifest/lock, Ruff and pytest configuration; React/TypeScript/Vite skeleton with npm lock and type/build scripts.
-2. Configuration loader with configurable SQLite path, API bind/origin settings, optional server-only YouTube key/channel ID. A missing key must not prevent offline startup. Document placeholder configuration and precedence.
-3. Idempotent SQLite initialization and schema-version mechanism only; no YouTube tables or data ingestion yet. A repository-layer connection helper uses a configured temporary/local path. Prove SQLite can perform a transaction in an integration test.
-4. `GET /health` with a stable status response and a React shell that shows backend health or a clear unavailable state. This is infrastructure smoke validation, not an analytics dashboard.
-5. Ignored secrets, local database/journal/WAL files, virtual environments, build output and logs; offline CI and a clean-checkout README. Include synthetic data only if a test needs it, clearly labeled.
-
-Acceptance criteria:
-
-- Frozen installs succeed from the committed locks on documented tool versions; no lock changes after installation.
-- Backend tests cover config precedence, missing-key offline startup, sanitized health response, SQLite transaction persistence in a temporary database, and repeated initialization without data loss. No test contacts YouTube.
-- Backend health returns HTTP 200 with `{"status":"ok"}`. Frontend dev server serves the app and it displays that status when the backend runs; when stopped, the UI displays an unavailable state. Do not claim browser behavior based on an HTML request alone; verify it in a browser or a meaningful UI test.
-- Ruff, frontend TypeScript checking, production build and offline CI checks pass. Verify no secret is included in tracked files or generated browser configuration.
-- README commands work from their stated directories. Record executed outcomes, versions and any skipped checks. Git changes contain only intended foundation deliverables.
-
-### Proposed Phase 1 verification commands
-
-The Phase 1 implementation supplies these commands; actual outcomes are recorded in `PHASE_1_VERIFICATION.md`. Run from the repository root:
+Required root-level verification:
 
 ```bash
 uv sync --project backend --frozen
+uv run --project backend --frozen pytest backend/tests
 uv run --project backend --frozen ruff check backend
 uv run --project backend --frozen ruff format --check backend
-uv run --project backend --frozen pytest backend/tests
 npm --prefix frontend ci
 npm --prefix frontend test
 npm --prefix frontend run typecheck
 npm --prefix frontend run build
-```
-
-Start in separate terminals from the repository root:
-
-```bash
-uv run --project backend --frozen python -m uvicorn youtube_insight.api.main:app --host 127.0.0.1 --port 8000
-npm --prefix frontend run dev -- --host 127.0.0.1 --port 5173 --strictPort
-```
-
-Configure the frontend's non-secret API base URL for port 8000 and allow exactly the local frontend origin in backend development CORS. Verify internally:
-
-```bash
-curl --fail --silent --show-error http://127.0.0.1:8000/health
-curl --fail --silent --show-error http://127.0.0.1:5173/
 git diff --check
-git status --short
 ```
 
-Assert the health JSON equals the documented response, and use browser/UI verification for health/unavailable display. Local requests validate services; do not publish loopback preview links. Use the existing isolated checkout, not a new worktree. Processes must be restarted in future cloud tasks; installation artifacts alone do not imply running services.
-
-Excluded from Phase 1: live YouTube calls, ETL implementation, analytics tables, channel/video API routes, charts, revenue calculations, scheduled collection, public hosting and authentication.
-
-## Phase 2 — Public YouTube extraction client (authorized scope)
-
-The user's Phase 2 instruction narrows the original ETL/persistence phase to extraction only. Implement a reusable Python YouTube Data API v3 client, typed public channel/video metadata, UTC collection timestamps, and an explicitly invoked bounded CLI sample. Do not load the database, add domain tables or API routes, or implement analytics.
-
-Use `channels.list` to obtain the uploads playlist, `playlistItems.list` with page tokens, and `videos.list` in batches of at most 50 IDs. Keep credentials server-side, out of URLs/logs/errors; use explicit timeouts, bounded retry/backoff, typed authentication/quota/HTTP/network errors, and an HTTP transport injectable for offline tests. Preserve null optional statistics, requested order and unavailable IDs. Bound both selected entries and playlist pages; expose incomplete coverage rather than promising a complete channel inventory.
-
-Acceptance: mocked success, pagination, empty/unavailable entries, absent statistics, invalid keys, HTTP errors, timeouts, quota errors, retry bounds and 50-ID batches all pass. CLI emits a normalized limited sample to stdout and sanitized structured events to stderr, with no persistence. Frozen installation, all backend tests and Ruff checks pass. Live integration is separately opt-in and unverified when a key or policy review is unavailable. See `YOUTUBE_EXTRACTION.md` and `PHASE_2_VERIFICATION.md`.
-
-Live-use gates remain: inspect current official policies and reference-project licensing before reuse, verify the selected artist channel, restrict the key and review quota/freshness/deletion obligations. Offline client implementation does not certify compliance. Persistence, refresh/purge commands and retention enforcement are deferred to a separately authorized loading phase; these must be designed before any stored API data is introduced.
-
-## Phase 3 — Read-only API and analytical UI
-
-Release-review prerequisite: Phase 2 is extraction-only and introduces no domain tables or loading. Before implementing this phase, agree on a separately authorized persistence step or an explicitly fixture-only API/UI scope. Live-backed functionality also requires validated channel identity, working key/network access and reviewed retention/deletion rules. Do not infer that a completed extraction client supplies a populated database.
-
-Expose channel overview and paginated video listings through `/api/v1`; React displays nullable metrics, freshness, coverage, loading, empty, stale and error states. Only repositories touch SQL. No collection triggered by GET requests and no public refresh route.
-
-Acceptance: API integration tests use a temporary SQLite fixture and validate schema, order, pagination bounds, nulls, expired-data behavior and sanitized failures. Frontend tests cover representative states and API contract compatibility; production build passes. A functional end-to-end flow uses synthetic seeded data, then optional policy-compliant live data. Label fixture mode clearly.
-
-## Phase 4 — Illustrative revenue scenarios
-
-Only after confirming policy permits the planned derived output, accept scenario view count/scope, viewer-country percentage weights, currency, and low/base/high effective creator RPM per country. Weights are user assumptions, never inferred audience data. Require weights to sum to 100% within a documented small tolerance; reject negatives, non-finite inputs and inverted ranges. Include an explicit rest-of-world category where needed.
-
-For scenario s: `estimated_revenue_s = scenario_views / 1000 × sum(country_weight × effective_RPM_country_s)`. Effective RPM is assumed creator revenue per thousand total scenario views; do not silently add CPM-to-RPM or monetized-share multipliers. Scope views by format; exclude Shorts from the baseline or supply a separately labeled model. Lifetime-view scenarios are hypothetical, never monthly earnings. No period estimate without a valid period view input.
-
-Acceptance: deterministic formula tests (100,000 views; 50% at $1 and 50% at $3 effective RPM → $200), low ≤ base ≤ high, invalid-input tests, clear currency/period/format labels and visible assumptions. UI explains unknown real audience distribution, rights splits and eligibility, and that outputs are not Faouzia's actual earnings. No undocumented “industry average” presented as fact; any presets require attributed, dated sources and remain editable assumptions.
-
-## Phase 5 — Reproducibility and presentation
-
-Document clean-clone installation, config, offline fixture demo, live opt-in workflow, quota handling, freshness and deletion operations, architecture, limitations and reference attribution/license obligations. Provide a concise demonstration narrative and screenshots from a clearly identified mode with no secrets or misleading earnings claims.
-
-Acceptance: execute the documented offline demo from a clean checkout using locks; all required suites/builds pass or documented repository defects are diagnosed honestly. Record real commands and outcomes, verify no API data/credentials/databases are tracked, and demonstrate purge behavior. Public deployment is outside this plan and needs a separate security/operations review.
+Use the existing isolated checkout, not a worktree. Live processes must restart in future tasks. Never label unrun or blocked checks as passing. Optional example channel IDs are not prevalidated identities; no product code should hardcode Faouzia as the application scope.

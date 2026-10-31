@@ -1,4 +1,4 @@
-"""Small synchronous SQLAlchemy layer backed by SQLite, without domain tables."""
+"""SQLite foundation with optional explicit domain initialization."""
 
 from pathlib import Path
 
@@ -33,7 +33,7 @@ def initialize_database(engine: Engine) -> None:
     """Initialize once; reject unknown versions rather than silently rewriting them."""
     with engine.begin() as connection:
         version = connection.execute(text("PRAGMA user_version")).scalar_one()
-        if version not in {0, SCHEMA_VERSION}:
+        if version not in {0, SCHEMA_VERSION, 2}:
             raise RuntimeError("Unsupported database schema version")
         if version == 0:
             connection.execute(text("PRAGMA user_version=1"))

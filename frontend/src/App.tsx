@@ -19,7 +19,7 @@ export default function App() {
           A foundation for<br /><span className="text-accent">clearer insights.</span>
         </h1>
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
-          A portfolio project exploring Faouzia’s public YouTube presence.
+          A portfolio workspace for exploring public YouTube channels.
           The workspace is ready for development. Channel analysis comes in a later phase.
         </p>
         <Panel className="mt-10">
