@@ -2,7 +2,7 @@
 
 A portfolio project exploring Faouzia's public YouTube presence using Python, FastAPI, React/TypeScript and SQLite. Built to demonstrate an understandable data pipeline and explainable analysis for GitHub, a project presentation, LinkedIn and a CV.
 
-**Phase 1:** offline application foundation. There are no YouTube API calls, live/placeholder channel statistics, analytics, revenue calculations, authentication, or background collection. Future phases require separate authorization and policy review. See the [plan](docs/IMPLEMENTATION_PLAN.md), [audit](docs/PRE_PHASE_1_AUDIT.md), and [actual verification report](docs/PHASE_1_VERIFICATION.md).
+**Phase 2:** reusable public YouTube extraction client and an opt-in sample CLI are implemented. The web app remains the offline foundation and never invokes collection. There is no database loading, analytics, revenue calculation, authentication, or background collection. Live integration is unverified; current policy review is still required. See the [plan](docs/IMPLEMENTATION_PLAN.md), [audit](docs/PRE_PHASE_1_AUDIT.md), [Phase 1 verification](docs/PHASE_1_VERIFICATION.md), and [Phase 2 verification](docs/PHASE_2_VERIFICATION.md).
 
 ## Requirements and installation
 
@@ -26,7 +26,7 @@ Defaults work without either file or any credentials. The backend reads the root
 
 `CORS_ORIGINS` is a JSON list of exact frontend origins, default `["http://127.0.0.1:5173"]`. If using `localhost` instead of `127.0.0.1`, configure the matching origin explicitly. Backend bind/port are Uvicorn command-line options.
 
-The frontend reads only its own Vite environment file. `VITE_API_BASE_URL` is a **public, non-secret** backend base URL, default `http://127.0.0.1:8000`. Restart Vite after configuration changes; rebuild for production changes. Never place credentials in any `VITE_*` variable. Optional `YOUTUBE_API_KEY` and `YOUTUBE_CHANNEL_ID` placeholders are backend-only, unused in Phase 1, and unnecessary for all current checks. Actual `.env` files and databases are ignored by Git.
+The frontend reads only its own Vite environment file. `VITE_API_BASE_URL` is a **public, non-secret** backend base URL, default `http://127.0.0.1:8000`. Restart Vite after configuration changes; rebuild for production changes. Never place credentials in any `VITE_*` variable. The `YOUTUBE_API_KEY` and `YOUTUBE_CHANNEL_ID` placeholders are backend-only. They are unnecessary for app startup and all automated checks; only explicitly invoked live extraction needs a key. Actual `.env` files and databases are ignored by Git.
 
 ## Start locally
 
@@ -70,9 +70,26 @@ Pytest uses temporary SQLite databases and synthetic transaction records. Vitest
 - `backend/src/youtube_insight/api/`: FastAPI health route and application lifecycle. Future domain routes use `/api/v1`; operational health is `/health`.
 - `backend/src/youtube_insight/data/`: SQLAlchemy engine, declarative base, session factory, SQLite pragmas and version initialization. No domain models exist yet. Connections use a five-second lock timeout and enforce foreign keys.
 - `frontend/src/`: React shell, reusable panel/status components, health request adapter, and Tailwind theme tokens for surfaces, typography, borders, focus and status colors. No external fonts, images or UI framework are needed.
-- Future ETL and analysis services will live in the Python package and use the data layer. They are deliberately not implemented here.
+- `backend/src/youtube_insight/etl/`: public YouTube client, normalized metadata models, and opt-in CLI. Extraction does not import the data layer or write SQLite. Database loading and analysis remain deferred.
 
 The browser asks FastAPI whether it is healthy. FastAPI checks SQLite through the shared data layer. The browser never opens the database or receives server secrets. SQLAlchemy is included at the user's request; no migration platform or additional database service is needed for this foundation.
+
+## Public YouTube extraction
+
+See [endpoint, pagination, retry and security documentation](docs/YOUTUBE_EXTRACTION.md) and the [Phase 2 verification report](docs/PHASE_2_VERIFICATION.md).
+
+```bash
+uv run --project backend --frozen youtube-sample --help
+```
+
+After configuring `YOUTUBE_API_KEY` securely on the server, reviewing current policies and verifying the intended channel, a deliberate live sample is:
+
+```bash
+uv run --project backend --frozen youtube-sample \
+  --channel-id UCLwbyg15zJgjtNL0EErkOPA --max-videos 5 --live
+```
+
+The CLI retrieves a channel's uploads playlist, traverses bounded pages, and fetches metadata in batches of at most 50 video IDs. It prints normalized JSON with UTC collection timestamps and unavailable-ID coverage, with sanitized JSON logs on stderr. It never loads SQLite. Missing counts remain unknown. `--live` is required; no live sample has been verified. Do not retain/commit API output before policy-compliant retention/deletion handling is reviewed.
 
 ## Public-data limitations and later policy gates
 

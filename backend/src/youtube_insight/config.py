@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pydantic import SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://127.0.0.1:5173"]
     youtube_api_key: SecretStr | None = None
     youtube_channel_id: str | None = None
+    youtube_max_videos: int = Field(default=100, ge=1, le=500)
+    youtube_timeout_seconds: float = Field(default=10, gt=0, le=60, allow_inf_nan=False)
+    youtube_max_retries: int = Field(default=2, ge=0, le=5)
+    youtube_backoff_seconds: float = Field(default=0.5, ge=0, le=8, allow_inf_nan=False)
 
     @field_validator("database_path")
     @classmethod

@@ -4,7 +4,7 @@
 
 Create a small, explainable portfolio application for Faouzia's public YouTube channel. Demonstrate collection, normalization, persistence, API design, UI presentation, and honest analysis. Use Python ETL, FastAPI, React/TypeScript, and SQLite. Local single-user development is the deployment target. This plan is a new baseline because the requested planning files were absent; external reference instructions remain unverified.
 
-Phase 1 has now been explicitly authorized. The user additionally requested SQLAlchemy, Tailwind CSS, Vitest, and the unversioned `/health` endpoint. These supersede the earlier no-ORM recommendation and `/health` proposal. Do not start Phase 2 automatically.
+Phase 1 has now been explicitly authorized. The user additionally requested SQLAlchemy, Tailwind CSS, Vitest, and the unversioned `/health` endpoint. These supersede the earlier no-ORM recommendation and `/api/v1/health` proposal. Phase 2 is now explicitly authorized for extraction only; database loading and analytics are excluded.
 
 ## Architecture and contracts
 
@@ -102,13 +102,19 @@ Assert the health JSON equals the documented response, and use browser/UI verifi
 
 Excluded from Phase 1: live YouTube calls, ETL implementation, analytics tables, channel/video API routes, charts, revenue calculations, scheduled collection, public hosting and authentication.
 
-## Phase 2 — Policy-reviewed ETL and persistence
+## Phase 2 — Public YouTube extraction client (authorized scope)
 
-Deliver the policy register and channel identity verification, then public channel and uploads/video collection CLI, normalized schema, repositories, explicit refresh/purge commands and run metadata. Key stays server-side; redact credential-bearing request URLs and exception text. Restrict the key to YouTube Data API and supported application restrictions; document quota alerts and budget. Tests remain offline by default.
+The user's Phase 2 instruction narrows the original ETL/persistence phase to extraction only. Implement a reusable Python YouTube Data API v3 client, typed public channel/video metadata, UTC collection timestamps, and an explicitly invoked bounded CLI sample. Do not load the database, add domain tables or API routes, or implement analytics.
 
-Acceptance: synthetic multi-page fixtures ingest all expected records; reruns create no duplicates; a failed page does not publish a partial run; hidden counts stay null; invalid key/quota/timeout failures have distinct sanitized outcomes; clock-controlled refresh/expiry and confirmed deletion purge affected data and derived records; failed refresh never extends expiry. Verify current quota cost against documented per-run request bounds. Live smoke check is opt-in with a configured key and policy gate satisfied; record its outcome separately.
+Use `channels.list` to obtain the uploads playlist, `playlistItems.list` with page tokens, and `videos.list` in batches of at most 50 IDs. Keep credentials server-side, out of URLs/logs/errors; use explicit timeouts, bounded retry/backoff, typed authentication/quota/HTTP/network errors, and an HTTP transport injectable for offline tests. Preserve null optional statistics, requested order and unavailable IDs. Bound both selected entries and playlist pages; expose incomplete coverage rather than promising a complete channel inventory.
+
+Acceptance: mocked success, pagination, empty/unavailable entries, absent statistics, invalid keys, HTTP errors, timeouts, quota errors, retry bounds and 50-ID batches all pass. CLI emits a normalized limited sample to stdout and sanitized structured events to stderr, with no persistence. Frozen installation, all backend tests and Ruff checks pass. Live integration is separately opt-in and unverified when a key or policy review is unavailable. See `YOUTUBE_EXTRACTION.md` and `PHASE_2_VERIFICATION.md`.
+
+Live-use gates remain: inspect current official policies and reference-project licensing before reuse, verify the selected artist channel, restrict the key and review quota/freshness/deletion obligations. Offline client implementation does not certify compliance. Persistence, refresh/purge commands and retention enforcement are deferred to a separately authorized loading phase; these must be designed before any stored API data is introduced.
 
 ## Phase 3 — Read-only API and analytical UI
+
+Release-review prerequisite: Phase 2 is extraction-only and introduces no domain tables or loading. Before implementing this phase, agree on a separately authorized persistence step or an explicitly fixture-only API/UI scope. Live-backed functionality also requires validated channel identity, working key/network access and reviewed retention/deletion rules. Do not infer that a completed extraction client supplies a populated database.
 
 Expose channel overview and paginated video listings through `/api/v1`; React displays nullable metrics, freshness, coverage, loading, empty, stale and error states. Only repositories touch SQL. No collection triggered by GET requests and no public refresh route.
 

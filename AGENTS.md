@@ -2,7 +2,7 @@
 
 ## Mission and current boundary
 
-Build the portfolio project described in README using Python ETL, FastAPI, React, and SQLite. Read `docs/IMPLEMENTATION_PLAN.md` and `docs/PRE_PHASE_1_AUDIT.md` first. Phase 1 is authorized: implement only the offline foundation. Do not begin Phase 2 without a new user instruction. Do not claim tests passed unless executed and inspected.
+Build the portfolio project described in README using Python ETL, FastAPI, React, and SQLite. Read `docs/IMPLEMENTATION_PLAN.md` and `docs/PRE_PHASE_1_AUDIT.md` first. Phase 2 is authorized for a reusable, mocked-tested public YouTube extraction client and CLI only. Do not implement database loading, analytics, or further phases. Keep live calls opt-in; document policy-review blockers. Do not claim tests passed unless executed and inspected.
 
 Use the existing checkout in the isolated cloud task. Do not create a worktree unless the user asks for one. Preserve unrelated user changes.
 
