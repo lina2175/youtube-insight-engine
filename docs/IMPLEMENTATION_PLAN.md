@@ -55,6 +55,8 @@ Acceptance: test multiple channels and FK association, null versus zero includin
 
 ## Phase 3B — Policy-gated live loading and operational readiness (not authorized)
 
+Review update: live prerequisites remain blocked. Before live loading, propose Phase 3B.0 as an offline API-shaped contract/end-to-end rehearsal using mocked HTTP and fictional data, followed by a separately gated Phase 3B.1 live verification. See [the proposed contract milestone](PHASE_3B_OFFLINE_CONTRACT_PLAN.md) for deliverables, mapping gaps and acceptance scenarios. This is a proposal only; no adapter or live persistence is authorized or implemented by the review.
+
 Verify selected channel identities and actual API behavior with bounded manual smoke checks. Review current official YouTube terms and quota costs; document concrete refresh/deletion deadlines, attribution and allowed derived uses. Add a separately reviewed bridge from extraction models to validated live storage, including missing/unavailable resource handling and coverage-aware refreshes. Phase 3A deliberately rejects live provenance; do not relabel live data as synthetic. Enforce retention/deletion across related records and any future caches/exports/backups. Distinguish source deletion from transient failure or a limited sample.
 
 Acceptance: policy register dated with applicable clauses; mocked complete/partial/quota/error loading cases; live checks separate from CI; key/permissions restrictions verified; no stale refresh extends expiry; deletion and rollback tests; quota/request budgets documented. No live-use compliance claim from an offline synthetic test.
