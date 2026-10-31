@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: #0b1018;
+  --color-surface: #131c29;
+  --color-line: #2b3a4e;
+  --color-ink: #edf3fa;
+  --color-muted: #a7b8cb;
+  --color-accent: #8ae4cd;
+  --font-sans: "Segoe UI", system-ui, sans-serif;
+}
+
+@layer base {
+  :root { color-scheme: dark; }
+  body { @apply m-0 bg-canvas font-sans text-ink antialiased; }
+  button, a { -webkit-tap-highlight-color: transparent; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+}
+
+@layer components {
+  .panel { @apply rounded-2xl border border-line bg-surface p-6 md:p-8; }
+  .eyebrow { @apply text-xs font-semibold uppercase tracking-[0.16em]; }
+  .brand-mark { @apply flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-sm text-canvas; }
+  .button-secondary { @apply rounded-lg border border-line px-3 py-2 text-sm text-ink transition-colors hover:bg-line; }
+  .status-badge { @apply inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium; }
+  .status-checking { @apply border-line text-muted; }
+  .status-connected { @apply border-accent/30 bg-accent/10 text-accent; }
+  .status-unavailable { @apply border-amber-300/30 bg-amber-300/10 text-amber-200; }
+  .status-dot { @apply h-2 w-2 rounded-full bg-current; }
+  .skip-link { @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-10 focus:rounded focus:bg-surface focus:p-3; }
+}
