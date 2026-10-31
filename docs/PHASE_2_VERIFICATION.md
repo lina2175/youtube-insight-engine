@@ -2,7 +2,7 @@
 
 Date: 2026-10-31. Authorized scope: secure, reusable public YouTube extraction client and limited CLI sample. No database loading or analytics.
 
-## Prerequisites and GitHub Actions
+## Initial implementation prerequisites and GitHub Actions
 
 - Read `AGENTS.md`, `docs/IMPLEMENTATION_PLAN.md`, and the existing audit and Phase 1 evidence before implementation.
 - At entry, Phase 1 files were untracked; `git log` showed only `11504ff` (initial license). Phase 1 was not already committed.
@@ -175,3 +175,19 @@ The Phase 2 commit includes the eight new and seven modified paths listed above,
 ### Phase 3 decision
 
 **Do not begin live-data Phase 3 yet.** The offline foundation and extraction client pass their checks, but live identity/authentication/API behavior, current policy review and hosted CI remain unverified. The plan also lacks a populated domain database because loading was explicitly excluded: agree on a separately authorized loading/retention phase or an explicitly fixture-only Phase 3 scope first. Offline planning can proceed once that scope is clarified. This review does not implement or authorize Phase 3.
+
+
+### Confirmed publication outcome
+
+The clean implementation/release commit is `dfa3ce52cf3d478c90114a845fa791cd333fb164` (`feat: add reviewed Phase 2 YouTube extraction client`), descended from Phase 1 `561877b`. A normal `git push -u origin HEAD:refs/heads/phase-2-integration` succeeded and created the separate review branch. After that first push, `git ls-remote --heads origin main phase-2-integration` confirmed:
+
+```text
+main:                11504ff240f85d8de753adae475b4371b2763fc7
+phase-2-integration: dfa3ce52cf3d478c90114a845fa791cd333fb164
+```
+
+Local `work` now tracks `origin/phase-2-integration`. No force push, main update or merge was performed. Phase 1 is included in the pushed branch history; it is still not merged into remote main. The implementation commit left a clean working tree. A report-only follow-up commit carries this actual publication evidence on the same branch; its tip is intentionally distinct from the implementation SHA above.
+
+The post-push command `gh run list --repo lina2175/youtube-insight-engine --branch phase-2-integration --limit 5 --json headSha,status,conclusion,url` again returned `Forbidden`. Therefore no hosted CI conclusion is confirmed, even though the workflow is now published. Check https://github.com/lina2175/youtube-insight-engine/actions for branch `phase-2-integration` with authorized access.
+
+After the implementation commit, the file/history scan was repeated across 42 candidate files and 50 historical blobs: no recognized credential signatures or private/generated file types found. The only subsequent change is this report's publication evidence. No live integration result was added or implied.
